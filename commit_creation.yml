@@ -1,0 +1,19 @@
+## ---------------------------------------------------------------------------
+## commit_creation.yml
+## Commits the blueprint right after the initial fabric creation.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Deploy blueprint (Commit)"
+      juniper.apstra.blueprint:
+        auth_token: "{{ auth.token }}"
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        commit_description: "Fabric Creation - Initial Commit"
+        state: committed

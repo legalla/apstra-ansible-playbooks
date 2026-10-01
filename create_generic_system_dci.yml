@@ -1,0 +1,67 @@
+## ---------------------------------------------------------------------------
+## create_generic_system.yml
+## Creates a single generic system (server / external device) with its links.
+## ---------------------------------------------------------------------------
+---
+- name: Create Generic Systems for DCI
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('apstra-pod1') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create a generic system for Remote Border 1
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "DCX-BL1"
+          hostname: "DCX-BL1"
+          asn: 65100
+          loopback_ipv4: 198.51.100.201/32
+          tags:
+            - border
+            - remote
+            - DCX
+          links:
+            - target_switch_id: "apstra_esi_001_leaf1"
+              target_switch_if_name: "ge-0/0/6"
+              target_switch_if_transform_id: 1
+            - target_switch_id: "apstra_esi_001_leaf2"
+              target_switch_if_name: "ge-0/0/6"
+              target_switch_if_transform_id: 1
+        state: present
+
+    - name: Create a generic system for Remote Border 2
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "DCX-BL2"
+          hostname: "DCX-BL2"
+          asn: 65101
+          loopback_ipv4: 198.51.100.202/32
+          tags:
+            - border
+            - remote
+            - DCX
+          links:
+            - target_switch_id: "apstra_esi_001_leaf1"
+              target_switch_if_name: "ge-0/0/7"
+              target_switch_if_transform_id: 1
+            - target_switch_id: "apstra_esi_001_leaf2"
+              target_switch_if_name: "ge-0/0/7"
+              target_switch_if_transform_id: 1
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

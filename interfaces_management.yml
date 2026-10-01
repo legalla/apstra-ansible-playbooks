@@ -1,0 +1,88 @@
+## ---------------------------------------------------------------------------
+## interfaces_management.yml
+## Bulk interface management example (status/speed/tags).
+## ---------------------------------------------------------------------------
+---
+- name: Commit Checks
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: "[INTF-SHUT-1] Shut down ethernet interface"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        system_name: "DCX-Spine1"
+        interface_name: "et-0/0/0"
+        admin_state: "down"
+        state: interface_updated
+        auth_token: "{{ auth.token }}"
+      register: shut_result
+
+    - name: "[INTF-SHUT-1] Display result"
+      ansible.builtin.debug:
+        var: shut_result
+
+    - name: "[INTF-TAG-1] Add tag to ethernet interface"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        system_name: "DCX-Spine1"
+        interface_name: "et-0/0/0"
+        tags:
+          - "test-intf-tag"
+        tag_state: present
+        state: interface_tagged
+        auth_token: "{{ auth.token }}"
+      register: tag_add_result
+
+    - name: "[INTF-TAG-1] Display result"
+      ansible.builtin.debug:
+        var: tag_add_result
+
+    - name: "[LAG-1] Set lag_mode to lacp_passive on port_channel"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        system_name: "DCX-Leaf1"
+        interface_name: "ae1"
+        lag_mode: "lacp_passive"
+        state: lag_updated
+        auth_token: "{{ auth.token }}"
+      register: lag_result
+
+    - name: "[LAG-1] Display result"
+      ansible.builtin.debug:
+        var: lag_result
+
+    - name: "[SPEED-1] Assign interface map with speed_updated (idempotent - same IM)"
+      juniper.apstra.interface_map:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          system_name: "DCX-Leaf1"
+          interface_name: "xe-0/0/24"
+          speed: "1G"
+        auth_token: "{{ auth.token }}"
+        state: speed_updated
+      register: speed_idem_result
+      ignore_errors: true
+
+    - name: "[SPEED-1] Display speed_updated result"
+      ansible.builtin.debug:
+        var: speed_idem_result
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

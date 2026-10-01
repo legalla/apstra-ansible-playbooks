@@ -1,0 +1,37 @@
+## ---------------------------------------------------------------------------
+## add_vim_bp.yml
+## Attaches an already-registered vCenter VIM to a specific blueprint so that
+## Apstra can map virtual machines onto the fabric.
+## ---------------------------------------------------------------------------
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars_files:
+    - vars/credentials.yml
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    ## Bind the vCenter VIM (matched by its management IP) to the blueprint
+    - name: Add virtual infra node to blueprint
+      juniper.apstra.virtual_infra_manager:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          infra_type: "vcenter"
+          vim_ip: "{{ vcenter_ip }}"
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

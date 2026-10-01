@@ -1,0 +1,62 @@
+## ---------------------------------------------------------------------------
+## upgrade_device_group.yml
+## Upgrades a group of devices (OS image).
+## ---------------------------------------------------------------------------
+---
+- name: Upgrade Groups of devices
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('Fabric1') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Gather all upgrade groups
+      juniper.apstra.upgrade_group:
+        state: gathered
+      register: groups_result
+
+    - name: Show groups
+      ansible.builtin.debug:
+        msg: "{{ groups_result }}"
+
+    - name: Impact assessment before upgrade
+      juniper.apstra.upgrade_group:
+        id:
+          name: "Test"
+        state: impact_report
+      register: impact
+
+    - name: Trigger upgrade on each member individually
+      juniper.apstra.os_upgrade:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          system: "{{ item }}"
+        body:
+          image: "junos-evo-install-qfx-ms-x86-64-23.4R2-S6.9-EVO.iso"
+        state: present
+      loop: "{{ groups_result.groups['Test'] | map(attribute='device_key') | list }}"
+      when: not impact.failed
+      register: upgrade_result
+
+    - name: Show upgrade result
+      ansible.builtin.debug:
+        var: upgrade_result
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"
+
+
+
+
+
+

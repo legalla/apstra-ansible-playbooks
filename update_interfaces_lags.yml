@@ -1,0 +1,35 @@
+## ---------------------------------------------------------------------------
+## update_interfaces_lags.yml
+## Updates LAG membership on fabric interfaces.
+## ---------------------------------------------------------------------------
+
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Set leaf1 ae1 to lacp_active
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        system_name: "DCX-Leaf1"
+        interface_name: "ae1"
+        lag_mode: "lacp_active"
+        auth_token: "{{ auth.token }}"
+        state: lag_updated
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

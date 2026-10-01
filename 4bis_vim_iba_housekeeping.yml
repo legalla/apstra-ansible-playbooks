@@ -1,0 +1,14 @@
+## ===========================================================================
+## 4bis_vim_iba_housekeeping.yml  —  Orchestrator (Step 4bis)
+## Disables the VIM/hypervisor related IBA probes after vCenter integration.
+## Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Disable VIM IBA Probes
+  ansible.builtin.import_playbook: disable_vim_iba_probes.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

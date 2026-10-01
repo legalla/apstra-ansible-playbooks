@@ -1,0 +1,38 @@
+## ---------------------------------------------------------------------------
+## add_new_tenant.yml
+## Onboards an additional tenant (VRF + virtual networks) into a running blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create a tenant grouping web and app routing zones
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        tenant:
+          label: "production"
+          routing_zones:
+            - "default"
+            - "Tenant1"
+            - "Tenant2"
+        state: absent
+        auth_token: "{{ auth.token }}"
+      register: tenant_create
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

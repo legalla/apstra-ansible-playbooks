@@ -1,0 +1,254 @@
+## ---------------------------------------------------------------------------
+## create_new_service.yml
+## Feature playbook imported by the "9_create_new_service" orchestrator.
+## Creates two virtual networks (VLAN45/46), four dual-homed servers, renames
+## and assigns their connectivity templates on ae40..ae43, then commits.
+## Relies on the session/blueprint_name opened by init.yml.
+## ---------------------------------------------------------------------------
+---
+- name: Create Services
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    ## --- Virtual Networks -------------------------------------------------
+    - name: Create a virtual network 45
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "VLAN45"
+          description: "VLAN45"
+          ipv4_enabled: true
+          virtual_gateway_ipv4: 192.0.2.161
+          ipv4_subnet: 192.0.2.160/28
+          virtual_gateway_ipv4_enabled: true
+          create_policy_tagged: true
+          vlan_id: 45
+          bound_to:
+            - system_id: "DCX-Leaf1"
+            - system_id: "DCX-Leaf2"
+          vn_id: "40045"
+          vn_type: "vxlan"
+          security_zone_id: "Tenant4"
+        state: present
+
+    - name: Create a virtual network 46
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "VLAN46"
+          description: "VLAN46"
+          ipv4_enabled: true
+          virtual_gateway_ipv4: 192.0.2.177
+          ipv4_subnet: 192.0.2.176/28
+          virtual_gateway_ipv4_enabled: true
+          create_policy_tagged: true
+          vlan_id: 46
+          bound_to:
+            - system_id: "DCX-Leaf1"
+            - system_id: "DCX-Leaf2"
+          vn_id: "40046"
+          vn_type: "vxlan"
+          security_zone_id: "Tenant4"
+        state: present
+
+    ## --- Generic Systems (one LACP bond per server) -----------------------
+    - name: Create a generic system for Server1
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Server1"
+          hostname: "Server1"
+          port_channel_id_min: 40
+          port_channel_id_max: 40
+          links:
+            - target_switch_id: "DCX-Leaf1"
+              target_switch_if_name: "xe-0/0/6"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-Leaf2"
+              target_switch_if_name: "xe-0/0/6"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present
+
+    - name: Create a generic system for Server2
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Server2"
+          hostname: "Server2"
+          port_channel_id_min: 41
+          port_channel_id_max: 41
+          links:
+            - target_switch_id: "DCX-Leaf1"
+              target_switch_if_name: "xe-0/0/7"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-Leaf2"
+              target_switch_if_name: "xe-0/0/7"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present
+
+    - name: Create a generic system for Server3
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Server3"
+          hostname: "Server3"
+          port_channel_id_min: 42
+          port_channel_id_max: 42
+          links:
+            - target_switch_id: "DCX-Leaf1"
+              target_switch_if_name: "xe-0/0/8"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-Leaf2"
+              target_switch_if_name: "xe-0/0/8"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present
+
+    - name: Create a generic system for Server4
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Server4"
+          hostname: "Server4"
+          port_channel_id_min: 43
+          port_channel_id_max: 43
+          links:
+            - target_switch_id: "DCX-Leaf1"
+              target_switch_if_name: "xe-0/0/9"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-Leaf2"
+              target_switch_if_name: "xe-0/0/9"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present
+
+    ## --- Rename the auto-generated connectivity templates -----------------
+    - name: Update CT Name for VN10
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Tagged VxLAN 'VLAN45'"
+          new_name: "VLAN45"
+        state: present
+
+    - name: Update CT Name for VN20
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Tagged VxLAN 'VLAN46'"
+          new_name: "VLAN46"
+        state: present
+
+    ## --- Assign both CTs to every server bond (ae40..ae43) ----------------
+    - name: Assign Connectivity Template VLAN45 to ae40
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN45"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae40"
+          state: present
+
+    - name: Assign Connectivity Template VLAN46 to ae40
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN46"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae40"
+          state: present
+
+    - name: Assign Connectivity Template VLAN45 to ae41
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN45"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae41"
+          state: present
+
+    - name: Assign Connectivity Template VLAN46 to ae41
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN46"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae41"
+          state: present
+
+    - name: Assign Connectivity Template VLAN45 to ae42
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN45"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae42"
+          state: present
+
+    - name: Assign Connectivity Template VLAN46 to ae42
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN46"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae42"
+          state: present
+
+    - name: Assign Connectivity Template VLAN45 to ae43
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN45"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae43"
+          state: present
+
+    - name: Assign Connectivity Template VLAN46 to ae43
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "VLAN46"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae43"
+          state: present
+
+    - name: "Commit"
+      juniper.apstra.blueprint:
+        auth_token: "{{ auth.token }}"
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        commit_description: "New Service"
+        state: committed

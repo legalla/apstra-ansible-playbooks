@@ -1,0 +1,19 @@
+## ---------------------------------------------------------------------------
+## commit_tenants.yml
+## Commits the blueprint after tenant creation.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Tenants
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Commit"
+      juniper.apstra.blueprint:
+        auth_token: "{{ auth.token }}"
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        commit_description: "Tenants creation"
+        state: committed

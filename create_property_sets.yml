@@ -1,0 +1,32 @@
+## ---------------------------------------------------------------------------
+## create_property_sets.yml
+## Creates catalog Property Sets used by configlets: NTP servers and the sFlow
+## collector. Service IP addresses are anonymised (RFC 5737) via
+## vars/credentials.yml.
+## ---------------------------------------------------------------------------
+---
+- name: Create Property Sets
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars_files:
+    - vars/credentials.yml
+  tasks:
+
+    - name: Create Property Sets for NTP
+      juniper.apstra.property_set:
+        body:
+          label: "NTP"
+          values:
+            mgmt_vrf: "management"
+            junos_mgmt_vrf: "mgmt_junos"
+            ntp_server: "{{ ntp_server_ip }}"
+        state: present
+
+    - name: Create Property Sets for sFlow
+      juniper.apstra.property_set:
+        body:
+          label: "Flow Data For Optional Flow Analytics"
+          values:
+            collector_ip: "{{ sflow_collector_ip }}"
+        state: present

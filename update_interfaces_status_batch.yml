@@ -1,0 +1,42 @@
+## ---------------------------------------------------------------------------
+## update_interfaces_status_batch.yml
+## Batch enable/disable of fabric interfaces.
+## ---------------------------------------------------------------------------
+
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: "[INTF-SHUT-1] Shut down ethernet interface"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          interfaces:
+            - system_name: "DCX-Leaf1"
+              interface_name: "ex-0/0/24"
+              admin_state: "down"
+            - system_name: "DCX-Leaf1"
+              interface_name: "ex-0/0/23"
+              admin_state: "down"
+            - system_name: "DCX-Leaf2"
+              interface_name: "ex-0/0/24"
+              admin_state: "down"
+        state: interface_updated
+        auth_token: "{{ auth.token }}"
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

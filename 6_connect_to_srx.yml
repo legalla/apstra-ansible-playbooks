@@ -1,0 +1,21 @@
+## ===========================================================================
+## 6_connect_to_srx.yml  —  Orchestrator (Step 6)
+## Connects an SRX firewall (generic system, routing policies / connectivity
+## templates and IP addressing) and commits. Composed exclusively of imported
+## playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Generic System for SRX
+  ansible.builtin.import_playbook: create_srx_gs.yml
+
+- name: Configure Routing Policies and Connectivity Templates
+  ansible.builtin.import_playbook: create_srx_ct.yml
+
+- name: Assign IP Addresses
+  ansible.builtin.import_playbook: create_srx_ip.yml
+
+- name: Commit
+  ansible.builtin.import_playbook: commit.yml

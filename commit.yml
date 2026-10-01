@@ -1,0 +1,18 @@
+## ---------------------------------------------------------------------------
+## commit.yml
+## Generic commit: deploys the staged blueprint changes.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Deploy blueprint (Commit)"
+      juniper.apstra.blueprint:
+        auth_token: "{{ auth.token }}"
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        state: committed

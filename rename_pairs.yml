@@ -1,0 +1,26 @@
+## ---------------------------------------------------------------------------
+## rename_pairs.yml
+## Renames the ESI/redundancy pairs of the fabric.
+## ---------------------------------------------------------------------------
+---
+- name: Rename ES Pairs
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Update name and hostname for Leaf Pair "Leafs"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_leaf_new_001_leaf_pair1"
+        node_label: "Leafs-Pair"
+        state: node_updated
+
+    - name: Update name and hostname for Leaf Pair "Borders"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_border_new_001_leaf_pair1"
+        node_label: "Borders-Pair"
+        state: node_updated

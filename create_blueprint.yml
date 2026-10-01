@@ -1,0 +1,22 @@
+## ---------------------------------------------------------------------------
+## create_blueprint.yml
+## Instantiates a new blueprint from the design template.
+## ---------------------------------------------------------------------------
+---
+- name: Create Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create blueprint
+      juniper.apstra.blueprint:
+        body:
+          label: "{{ blueprint_name }}"
+          design: two_stage_l3clos
+          init_type: template_reference
+          template_id: "Fabric-DCX"
+        auth_token: "{{ auth.token }}"
+        state: present
+        lock_state: "ignore"
+

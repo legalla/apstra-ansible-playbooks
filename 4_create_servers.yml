@@ -1,0 +1,17 @@
+## ===========================================================================
+## 4_create_servers.yml  —  Orchestrator (Step 4)
+## Registers vCenter as a VIM, attaches it to the blueprint, creates an ESX
+## generic system and commits. Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Register vCenter VIM and create ESX generic system
+  ansible.builtin.import_playbook: create_servers.yml
+
+- name: Commit
+  ansible.builtin.import_playbook: commit_servers.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

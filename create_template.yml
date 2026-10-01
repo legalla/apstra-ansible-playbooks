@@ -1,0 +1,25 @@
+## ---------------------------------------------------------------------------
+## create_template.yml
+## Creates the design template referenced when building the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Create Design Template
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Create design templates"
+      juniper.apstra.design:
+        id:
+          design_type: template
+          name: Fabric-DCX
+        body:
+          spine:
+            logical_device: 5220
+            count: 2
+          racks:
+            Rack-Border-New: 1
+            Rack-Leaf-New: 1
+          overlay_control_protocol: evpn
+          asn_allocation_policy: distinct

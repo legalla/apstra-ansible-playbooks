@@ -1,0 +1,52 @@
+## ---------------------------------------------------------------------------
+## reports.yml
+## Generates operational reports from the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Checks
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: "Test 1: Generate full report"
+      block:
+        - name: Generate full report
+          juniper.apstra.blueprint_report:
+            id:
+              blueprint: "{{ blueprint_name }}"
+            report_type: full
+            auth_token: "{{ auth.token }}"
+          register: full_report
+
+    - name: "Test 2: Generate health report"
+      block:
+        - name: Generate health report
+          juniper.apstra.blueprint_report:
+            id:
+              blueprint: "{{ blueprint_name }}"
+            report_type: health
+            auth_token: "{{ auth.token }}"
+          register: health_report
+
+    - name: "Display full report"
+      ansible.builtin.debug:
+        var: full_report
+
+    - name: "Display health report"
+      ansible.builtin.debug:
+        var: health_report
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

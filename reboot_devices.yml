@@ -1,0 +1,36 @@
+## ---------------------------------------------------------------------------
+## reboot_devices.yml
+## Reboots a set of managed devices.
+## ---------------------------------------------------------------------------
+
+---
+- name: Reboot devices
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Reboot Devices
+      juniper.apstra.device_management:
+        id:
+          blueprint: DCX
+          system_names: 
+            - DCX-Leaf1
+            - DCX-Leaf2
+        body:
+          force: true
+        state: rebooted
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

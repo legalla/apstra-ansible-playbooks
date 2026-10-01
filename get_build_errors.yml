@@ -1,0 +1,36 @@
+## ---------------------------------------------------------------------------
+## build_errors.yml
+## Fetches and displays the current build errors of the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Checks
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Collect build errors only
+      juniper.apstra.blueprint_health:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        scope: errors
+        auth_token: "{{ auth.token }}"
+      register: health_errors
+
+    - name: Show build errors
+      ansible.builtin.debug:
+        var: health_errors
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

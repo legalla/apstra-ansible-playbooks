@@ -1,0 +1,74 @@
+## ---------------------------------------------------------------------------
+## add_new_rack.yml
+## Adds a new rack to an existing blueprint from a rack type and commits the change.
+## ---------------------------------------------------------------------------
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Add Racks of type 'Rack-Leaf-New'
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        rack_type: "Rack-Leaf-New"
+        racks_to_add: 3
+        state: rack_added
+      register: racks_result
+
+    - name: Rename rack from 'da_rack_001' to 'border-rack-1'
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_leaf_new_001"
+        rack_label: "new_rack_011"
+        node_type: rack
+        state: node_updated
+
+    - name: Rename rack from 'da_rack_001' to 'border-rack-1'
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_leaf_new_002"
+        rack_label: "new_rack_012"
+        node_type: rack
+        state: node_updated
+
+    - name: Rename rack from 'da_rack_001' to 'border-rack-1'
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_leaf_new_003"
+        rack_label: "new_rack_013"
+        node_type: rack
+        state: node_updated
+
+    - name: Assign interface maps to devices
+      juniper.apstra.interface_map:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          assignments:
+            rack_leaf_new_001_leaf1: "5120-48T"
+            rack_leaf_new_001_leaf2: "5120-48T"
+            rack_leaf_new_002_leaf1: "5120-48T"
+            rack_leaf_new_002_leaf2: "5120-48T"
+            rack_leaf_new_003_leaf1: "5120-48T"
+            rack_leaf_new_003_leaf2: "5120-48T"
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

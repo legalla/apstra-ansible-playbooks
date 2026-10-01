@@ -1,0 +1,34 @@
+## ---------------------------------------------------------------------------
+## add_vcenter.yml
+## Registers a vCenter server as a global Virtual Infrastructure Manager (VIM)
+## in Apstra so that virtual workloads and their VLANs can be discovered.
+## Sensitive values are pulled from vars/credentials.yml (anonymised).
+## ---------------------------------------------------------------------------
+---
+- name: Register vCenter as a Virtual Infrastructure Manager
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars_files:
+    - vars/credentials.yml
+  tasks:
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    ## Create the global VIM object using the anonymised credentials
+    - name: Create global vCenter VIM
+      juniper.apstra.virtual_infra_manager:
+        body:
+          display_name: "example-vcenter"
+          virtual_infra_type: "vcenter"
+          management_ip: "{{ vcenter_ip }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

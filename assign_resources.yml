@@ -1,0 +1,64 @@
+## ---------------------------------------------------------------------------
+## assign_resources.yml
+## Allocates resource pools (ASN, loopback and fabric IP pools) to the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Assign Resources to Roles and Links
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Assign ASN pool to Spines"
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "asn"
+          group_name: "spine_asns"
+        body:
+          pool_ids:
+            - "Fabric-2"
+        state: present
+
+    - name: "Assign ASN pool to Leafs"
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "asn"
+          group_name: "leaf_asns"
+        body:
+          pool_ids:
+            - "Fabric-2"
+        state: present
+
+    - name: "Assign IP pool to Loopback IPs - Spines"
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "ip"
+          group_name: "spine_loopback_ips"
+        body:
+          pool_ids:
+            - "Fabric2-Loopbacks"
+        state: present
+
+    - name: "Assign IP pool to Loopback IPs - Leafs"
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "ip"
+          group_name: "leaf_loopback_ips"
+        body:
+          pool_ids:
+            - "Fabric2-Loopbacks"
+        state: present
+
+    - name: "Assign IP pool to Spines Leaf Links"
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "ip"
+          group_name: "spine_leaf_link_ips"
+        body:
+          pool_ids:
+            - "Fabric2-Underlay"

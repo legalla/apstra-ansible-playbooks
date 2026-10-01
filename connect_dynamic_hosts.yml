@@ -1,0 +1,97 @@
+## ---------------------------------------------------------------------------
+## connect_dynamic_hosts.yml
+## Feature playbook imported by the "10_connect_dynamic_hosts" orchestrator.
+## Creates a BGP-to-host routing policy and connectivity template, assigns it
+## to a server bond, sets a floating IP and commits.
+## Relies on the session/blueprint_name opened by init.yml.
+## ---------------------------------------------------------------------------
+---
+- name: Create Connectivity Template for BGP to Hosts
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    ## Routing policy advertising a default route to dynamically routed hosts
+    - name: Create a routing policy for BGP to Hosts
+      juniper.apstra.routing_policy:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          description: "BGP-to-HOST"
+          expect_default_ipv4_route: true
+          expect_default_ipv6_route: false
+          export_policy:
+            l2edge_subnets: false
+            loopbacks: false
+            spine_leaf_links: false
+            spine_superspine_links: false
+            static_routes: false
+          extra_export_routes:
+            - prefix: "0.0.0.0/0"
+              action: "permit"
+          import_policy: "all"
+          label: "BGP-to-HOST"
+          policy_type: "user_defined"
+        state: present
+
+    ## Connectivity template establishing a BGP session with the generic system
+    - name: Create Connectivity Template for BGP to Hosts
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "BGP-to-HOST"
+          type: interface
+          description: "Routing Policy for BGP to Hosts"
+          tags:
+            - ospf
+          primitives:
+            virtual_network_singles:
+              vn:
+                vn_node_id: "Tenant2_VLAN22"
+                tag_type: tagged
+                bgp_peering_generic_systems:
+                  bgp_test:
+                    bfd: false
+                    session_addressing_ipv4: addressed
+                    session_addressing_ipv6: none
+                    ipv4_safi: true
+                    ipv6_safi: false
+                    ttl: 2
+                    holdtime_timer: 90
+                    keepalive_timer: 30
+                    peer_from: interface
+                    peer_to: interface_or_shared_ip_endpoint
+                    neighbor_asn_type: static
+                    routing_policies:
+                      default_rp:
+                        rp_to_attach: "BGP-to-HOST"
+        state: present
+
+    - name: Assign Connectivity Template BGP-to-HOST to Leafs
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "BGP-to-HOST"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae1"
+          state: present
+
+    ## Shared anycast/floating gateway IP for the dynamic hosts (RFC 5737)
+    - name: Update floating IP address
+      juniper.apstra.floating_ip:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          virtual_network: "Tenant2_VLAN22"
+          ipv4_addr: "192.0.2.94/28"
+        state: present
+
+    - name: "Deploy blueprint (Commit)"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        state: committed

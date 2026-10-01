@@ -1,0 +1,30 @@
+## ---------------------------------------------------------------------------
+## disable_vim_iba_probes.yml
+## Feature playbook: disables the VIM/hypervisor IBA probes (imported by step 4bis).
+## ---------------------------------------------------------------------------
+---
+- name: Disable IBA
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Disable VLAN Config Mismatch IBA
+      juniper.apstra.iba_probes:
+        type: probe
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "Hypervisor & Fabric VLAN Config Mismatch"
+          disabled: true
+        state: present
+
+    - name: Disable VMs Without Fabric Configured VLANs IBA
+      juniper.apstra.iba_probes:
+        type: probe
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "VMs Without Fabric Configured VLANs"
+          disabled: true
+        state: present

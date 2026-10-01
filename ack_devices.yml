@@ -1,0 +1,15 @@
+## ---------------------------------------------------------------------------
+## ack_devices.yml
+## Acknowledges every discovered device (system agent) in the blueprint so Apstra can manage them.
+## ---------------------------------------------------------------------------
+---
+- name: Acknowledge Devices
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Acknowledge quarantined devices"
+      juniper.apstra.system_agents:
+        state: acknowledged
+      register: ack_result

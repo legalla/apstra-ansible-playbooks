@@ -1,0 +1,125 @@
+## ---------------------------------------------------------------------------
+## create_srx_ct.yml
+## Creates the routing policies and connectivity templates for the SRX firewall.
+## ---------------------------------------------------------------------------
+---
+- name: Create Connectivity Templates for SRX
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create a routing policy for SR in VRF Tenant1
+      juniper.apstra.routing_policy:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          description: "BGP-Tenant1"
+          expect_default_ipv4_route: true
+          expect_default_ipv6_route: false
+          export_policy:
+            l2edge_subnets: false
+            loopbacks: false
+            spine_leaf_links: false
+            spine_superspine_links: false
+            static_routes: false
+          extra_export_routes:
+            - prefix: "192.0.2.0/24"
+              action: "permit"
+              le_mask: 32
+          import_policy: "all"
+          label: "BGP-Tenant1"
+          policy_type: "user_defined"
+        state: present
+
+    - name: Create a routing policy for SR in VRF Tenant2
+      juniper.apstra.routing_policy:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          description: "BGP-Tenant2"
+          expect_default_ipv4_route: true
+          expect_default_ipv6_route: false
+          export_policy:
+            l2edge_subnets: false
+            loopbacks: false
+            spine_leaf_links: false
+            spine_superspine_links: false
+            static_routes: false
+          extra_export_routes:
+            - prefix: "192.0.2.0/24"
+              action: "permit"
+              le_mask: 32
+          import_policy: "all"
+          label: "BGP-Tenant2"
+          policy_type: "user_defined"
+        state: present
+
+    - name: Create BGP-to-SRX Connectivity Template
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "BGP-to-SRX"
+          type: interface
+          description: "CT for BGP-to-SRX connectivity"
+          tags:
+            - Router
+          primitives:
+            ip_links:
+              srx_link1:
+                security_zone: "Tenant1"
+                interface_type: tagged
+                ipv4_addressing_type: numbered
+                ipv6_addressing_type: none
+                vlan_id: 901
+                bgp_peering_generic_systems:
+                  bgp_srx1:
+                    bfd: false
+                    session_addressing_ipv4: addressed
+                    session_addressing_ipv6: none
+                    ipv4_safi: true
+                    ipv6_safi: false
+                    ttl: 2
+                    holdtime_timer: 90
+                    keepalive_timer: 30
+                    peer_from: interface
+                    peer_to: interface_or_ip_endpoint
+                    neighbor_asn_type: static
+                    routing_policies:
+                      default_rp:
+                        rp_to_attach: "BGP-Tenant1"
+              srx_link2:
+                security_zone: "Tenant2"
+                interface_type: tagged
+                ipv4_addressing_type: numbered
+                ipv6_addressing_type: none
+                vlan_id: 801
+                bgp_peering_generic_systems:
+                  bgp_srx2:
+                    bfd: false
+                    session_addressing_ipv4: addressed
+                    session_addressing_ipv6: none
+                    ipv4_safi: true
+                    ipv6_safi: false
+                    ttl: 2
+                    holdtime_timer: 90
+                    keepalive_timer: 30
+                    peer_from: interface
+                    peer_to: interface_or_ip_endpoint
+                    neighbor_asn_type: static
+                    routing_policies:
+                      default_rp:
+                        rp_to_attach: "BGP-Tenant2"
+        state: present
+
+    - name: Assign Connectivity Template BGP-to-SRX for SRX L3
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "BGP-to-SRX"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1:xe-0/0/3"
+              - "DCX-Leaf2:xe-0/0/3"
+          state: present

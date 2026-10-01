@@ -1,0 +1,96 @@
+## ---------------------------------------------------------------------------
+## create_tenant_l2.yml
+## Creates tenant 5: its VRF and virtual networks (RFC 5737 subnets).
+## ---------------------------------------------------------------------------
+---
+- name: Create Tenant 5
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create VRF Tenant5
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          description: "Tenant5"
+          vni_id: 50000
+          sz_type: evpn
+          junos_evpn_irb_mode: "symmetric"
+          label: "Tenant5"
+          vrf_name: "Tenant5"
+        state: present
+
+    - name: Assign IP pool for Loopbacks in VRF Tenant5
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "ip"
+          group_name: "sz:Tenant5,leaf_loopback_ips"
+        body:
+          pool_ids:
+            - "Fabric2-Loopbacks"
+        state: present
+
+    - name: Create Virtual Network VLAN50 in Tenant5
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "Tenant5_VLAN50"
+          description: "VLAN50 in Tenant5"
+          ipv4_enabled: false
+          vlan_id: 50
+          create_policy_tagged: true
+          bound_to:
+            - system_id: "Borders-Pair"
+            - system_id: "Leafs-Pair"
+          vn_id: "10050"
+          vn_type: "vxlan"
+          security_zone_id: "Tenant5"
+        state: present
+
+    - name: Rename Connectivity Template VLAN50 to a more comprehensive name
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Tagged VxLAN 'Tenant5_VLAN50'"
+          new_name: "Tenant5_VLAN50"
+        state: present
+
+    - name: Assign Connectivity Template to Interfaces for VN Tenant5_VLAN50
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "Tenant5_VLAN50"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae1"
+          state: present
+
+    - name: Create L3 Policy
+      juniper.apstra.interconnect_gateway:
+        type: domain
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          label: "Transit"
+          security_zones:
+            "Tenant5":
+              enabled_for_l3: false
+        state: present
+
+    - name: Set VN connection type
+      juniper.apstra.interconnect_gateway:
+        type: domain
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          label: "Transit"
+          virtual_networks:
+            "Tenant5_VLAN50":
+              l2: true
+              l3: false
+        state: present

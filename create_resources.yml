@@ -1,0 +1,41 @@
+## ---------------------------------------------------------------------------
+## create_resources.yml
+## Creates the ASN and IP resource pools of the fabric.
+## ---------------------------------------------------------------------------
+---
+- name: Create Resources Pools
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    # Step 1: Create an ASN Pool
+    - name: Create ASN pool
+      juniper.apstra.resource_pools:
+        type: asn
+        body:
+          display_name: "Fabric-2"
+          ranges:
+            - first: 65100
+              last: 65199
+        auth_token: "{{ auth.token }}"
+
+    # Step 2: Create an IP Pool
+    - name: Create IP pool for Loopbacks in DCX
+      juniper.apstra.resource_pools:
+        type: ip
+        body:
+          display_name: "Fabric2-Loopbacks"
+          subnets:
+            - network: 198.51.100.128/25
+        auth_token: "{{ auth.token }}"
+
+    # Step 3: Create an IP Pool
+    - name: Create IP pool for Underlay in DCX
+      juniper.apstra.resource_pools:
+        type: ip
+        body:
+          display_name: "Fabric2-Underlay"
+          subnets:
+            - network: 198.51.100.0/25
+        auth_token: "{{ auth.token }}"

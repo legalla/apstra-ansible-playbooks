@@ -1,0 +1,17 @@
+## ===========================================================================
+## 5_create_tenants.yml  —  Orchestrator (Step 5, multi-tenant variant)
+## Creates tenant 2 (L3, VLAN20-22) and tenant 5 (L2, VLAN50), each with its VRF.
+## Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Tenant 2 (L3), create VN
+  ansible.builtin.import_playbook: create_tenant_l3.yml
+
+- name: Create Tenant 5 (L2), create VN
+  ansible.builtin.import_playbook: create_tenant_l2.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

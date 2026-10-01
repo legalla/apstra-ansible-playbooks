@@ -1,0 +1,64 @@
+## ---------------------------------------------------------------------------
+## create_servers.yml
+## Feature playbook imported by the "4_create_servers" orchestrator.
+## Registers the vCenter VIM, attaches it to the blueprint and creates a
+## dual-homed (LACP) ESX generic system. Relies on the Apstra session and the
+## blueprint_name fact opened by init.yml. Secrets come from
+## vars/credentials.yml (anonymised).
+## ---------------------------------------------------------------------------
+---
+- name: Create Servers (vCenter VIM + ESX generic system)
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars_files:
+    - vars/credentials.yml
+  tasks:
+
+    ## Register vCenter globally so Apstra can learn the virtual workloads
+    - name: Create global vCenter VIM
+      juniper.apstra.virtual_infra_manager:
+        body:
+          display_name: "example-vcenter"
+          virtual_infra_type: "vcenter"
+          management_ip: "{{ vcenter_ip }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+        state: present
+
+    - name: Wait 10 seconds for Apstra to connect to vCenter
+      ansible.builtin.pause:
+        seconds: 10
+
+    ## Attach the VIM to the blueprint so VMs can be mapped onto the fabric
+    - name: Add virtual infra node to blueprint
+      juniper.apstra.virtual_infra_manager:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          infra_type: "vcenter"
+          vim_ip: "{{ vcenter_ip }}"
+        state: present
+
+    ## Create a dual-homed ESX host as a generic system with an LACP bond
+    - name: Create a generic system for ESX in DCX
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "ESX-DCX"
+          hostname: "ESX-DCX"
+          port_channel_id_min: 1
+          port_channel_id_max: 1
+          links:
+            - target_switch_id: "DCX-Leaf1"
+              target_switch_if_name: "xe-0/0/24"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-Leaf2"
+              target_switch_if_name: "xe-0/0/24"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present

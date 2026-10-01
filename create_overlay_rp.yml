@@ -1,0 +1,33 @@
+## ---------------------------------------------------------------------------
+## create_overlay_rp.yml
+## Creates the routing policy used by the DCI overlay.
+## ---------------------------------------------------------------------------
+---
+- name: Routing Policy for DCI Overlay
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create a routing policy for DCI Overlay
+      juniper.apstra.routing_policy:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          description: "DCI-Overlay"
+          expect_default_ipv4_route: true
+          expect_default_ipv6_route: false
+          export_policy:
+            l2edge_subnets: true
+            loopbacks: true
+            spine_leaf_links: false
+            spine_superspine_links: false
+            static_routes: false
+          extra_export_routes:
+            - prefix: "192.0.2.224/28"
+              action: "permit"
+              le_mask: 28
+          import_policy: "all"
+          label: "DCI-Overlay"
+          policy_type: "user_defined"
+        state: present

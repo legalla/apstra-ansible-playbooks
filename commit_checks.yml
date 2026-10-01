@@ -1,0 +1,38 @@
+## ---------------------------------------------------------------------------
+## commit_checks.yml
+## Runs pre-commit validation checks on the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Checks
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Run commit check without warnings
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        state: commit_check
+        include_warnings: true
+        auth_token: "{{ auth.token }}"
+      register: commit_check_no_warn
+
+    - name: Display commit check results without warnings
+      ansible.builtin.debug:
+        var: commit_check_no_warn
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

@@ -1,0 +1,59 @@
+## ---------------------------------------------------------------------------
+## create_srx_l2_tenant5.yml
+## Creates the layer-2 SRX service objects for tenant 5.
+## ---------------------------------------------------------------------------
+---
+- name: Create Generic Systems for SRX
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create a generic system representing SRX L2
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "SRX-L2"
+          hostname: "SRX-L2"
+          port_channel_id_min: 2
+          port_channel_id_max: 2
+          tags:
+            - SRX
+            - rstp-disable
+          links:
+            - target_switch_id: "DCX-leaf1"
+              target_switch_if_name: "xe-0/0/2"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-leaf2"
+              target_switch_if_name: "xe-0/0/2"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present
+
+    - name: Assign Connectivity Template to Interfaces for VN Tenant5_VLAN50
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "Tenant5_VLAN50"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae2"
+          state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

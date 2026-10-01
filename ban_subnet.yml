@@ -1,0 +1,25 @@
+## ---------------------------------------------------------------------------
+## ban_subnet.yml
+## Demonstrates blocking (banning) a subnet from being reused as a resource.
+## ---------------------------------------------------------------------------
+---
+- name: Create user
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Unban a subnet
+      juniper.apstra.banned_list:
+        ip_subnet: "203.0.113.0/24"
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

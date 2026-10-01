@@ -1,0 +1,56 @@
+## ---------------------------------------------------------------------------
+## create_vrf.yml
+## Creates a VRF / security zone in the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Create Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Get local hostname
+      ansible.builtin.command: hostname
+      register: local_hostname
+      changed_when: false
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "apstra-pod1"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create VRF1
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          description: "VRF1"
+          vlan_id: 1000
+          vni_id: 101000
+          sz_type: evpn
+          junos_evpn_irb_mode: "symmetric"
+          label: "VRF1"
+          vrf_name: "VRF1"
+        state: present
+
+    - name: Create VRF2
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          description: "VRF2"
+          vlan_id: 2000
+          vni_id: 202000
+          sz_type: evpn
+          junos_evpn_irb_mode: "symmetric"
+          label: "VRF2"
+          vrf_name: "VRF2"
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

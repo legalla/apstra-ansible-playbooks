@@ -1,0 +1,68 @@
+## ---------------------------------------------------------------------------
+## create_configlet_complex.yml
+## Creates a more advanced configlet with multiple sections / templates.
+## ---------------------------------------------------------------------------
+---
+- name: Create Configlets
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('apstra-pod1') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create configlet for IFA
+      juniper.apstra.configlets:
+        type: catalog
+        body:
+          display_name: "ifa"
+          generators:
+            - config_style: "junos"
+              section: "system"
+              template_text: |
+                set services inband-flow-telemetry device-id auto
+                set services inband-flow-telemetry flow-type vxlan
+                {{ '{%' }} macro ifa_interfaces(name) {{ '%}' }} 
+                    set interfaces {{ '{{' }}name {{ '}}' }} unit 0 family inet sampling input
+                    set interfaces {{ '{{' }}name {{ '}}' }} unit 0 family inet sampling output
+                    set interfaces {{ '{{' }}name {{ '}}' }} unit 0 family inet sampling input instance {{ '{{' }}instance_name {{ '}}' }}
+                    set interfaces {{ '{{' }}name {{ '}}' }} unit 0 family inet sampling output instance {{ '{{' }}instance_name {{ '}}' }}
+                {{ '{%' }} endmacro {{ '%}' }}
+                set firewall sampling instance {{ '{{' }}instance_name {{ '}}' }} sample-rate {{ '{{' }}sample_rate {{ '}}' }}
+                set firewall sampling instance {{ '{{' }}instance_name {{ '}}' }} input rate {{ '{{' }}input_rate {{ '}}' }}
+                set firewall sampling instance {{ '{{' }}instance_name {{ '}}' }} output rate {{ '{{' }}output_rate {{ '}}' }}
+                set firewall sampling instance {{ '{{' }}instance_name {{ '}}' }} run-length {{ '{{' }}run_length {{ '}}' }}
+                set firewall sampling instance {{ '{{' }}instance_name {{ '}}' }} max-packets-per-second {{ '{{' }}max_pps {{ '}}' }}
+                set firewall sampling instance {{ '{{' }}instance_name {{ '}}' }} inactive-timeout {{ '{{' }}timeout {{ '}}' }}
+                {{ '{%' }} for interface in interfaces {{ '%}' }}
+                    {{ '{%' }} if interface.role == 'spine_leaf' {{ '%}' }}
+                        {{ '{{' }}ifa_interfaces(interface.name) {{ '}}' }}
+                    {{ '{%' }} endif {{ '%}' }}
+                {{ '{%' }} endfor {{ '%}' }}
+              negation_template_text: ""
+              filename: ""
+        state: present
+
+    - name: Import catalog configlet to blueprint
+      juniper.apstra.configlets:
+        type: blueprint
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          configlet: "ifa"
+          condition: 'role in ["spine", "leaf"]'
+          label: "ifa"
+        state: present
+      register: bp_import
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

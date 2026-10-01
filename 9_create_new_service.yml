@@ -1,0 +1,14 @@
+## ===========================================================================
+## 9_create_new_service.yml  —  Orchestrator (Step 9)
+## Adds a brand new service (VLAN45/46 + four servers + CT assignment) on top
+## of an existing fabric. Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create the new service (VNs, servers, connectivity templates)
+  ansible.builtin.import_playbook: create_new_service.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

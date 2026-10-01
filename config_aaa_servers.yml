@@ -1,0 +1,40 @@
+## ---------------------------------------------------------------------------
+## config_aaa_servers.yml
+## Declares a RADIUS 802.1x AAA server in the blueprint. The server IP and the
+## shared secret are anonymised (RFC 5737 / CHANGE_ME) via vars/credentials.yml.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Checks
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars_files:
+    - vars/credentials.yml
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create a RADIUS 802.1x AAA server
+      juniper.apstra.aaa_server:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          label: "radius-1"
+          hostname: "{{ radius_server_ip }}"
+          key: "{{ radius_key }}"
+          server_type: "radius_dot1x"
+          auth_port: 1812
+          acct_port: 1813
+        auth_token: "{{ auth.token }}"
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

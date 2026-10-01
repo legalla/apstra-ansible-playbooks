@@ -1,0 +1,30 @@
+## ---------------------------------------------------------------------------
+## disable_env_iba_probes.yml
+## Feature playbook: disables the environment-related IBA probes (imported by step 1bis).
+## ---------------------------------------------------------------------------
+---
+- name: Disable IBA
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Disable Environment Checks IBA
+      juniper.apstra.iba_probes:
+        type: probe
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "Device Environmental Checks"
+          disabled: true
+        state: present
+
+    - name: Disable Shared Tunnel Detector IBA
+      juniper.apstra.iba_probes:
+        type: probe
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "Juniper Shared-Tunnel Reboot Detector"
+          disabled: true
+        state: present

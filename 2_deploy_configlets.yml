@@ -1,0 +1,26 @@
+## ===========================================================================
+## 2_deploy_configlets.yml  —  Orchestrator (Step 2)
+## Creates configlets and property sets, imports them into the blueprint and
+## commits. Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Configlets
+  ansible.builtin.import_playbook: create_configlets.yml
+
+- name: Create Property Sets
+  ansible.builtin.import_playbook: create_property_sets.yml
+
+- name: Import Configlets into the Blueprint
+  ansible.builtin.import_playbook: import_configlets.yml
+
+- name: Import Property Sets into the Blueprint
+  ansible.builtin.import_playbook: import_property_sets.yml
+
+- name: Commit
+  ansible.builtin.import_playbook: commit_configlets.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

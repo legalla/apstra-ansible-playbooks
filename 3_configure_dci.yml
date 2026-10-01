@@ -1,0 +1,26 @@
+## ===========================================================================
+## 3_configure_dci.yml  —  Orchestrator (Step 3)
+## Builds the Data Center Interconnect (remote borders, DCI underlay/overlay and
+## routing policy) and commits. Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Generic System for Remote Borders
+  ansible.builtin.import_playbook: create_remote_borders.yml
+
+- name: Configure DCI Underlay
+  ansible.builtin.import_playbook: create_dci_underlay.yml
+
+- name: Create DCI Overlay Routing Policy
+  ansible.builtin.import_playbook: create_overlay_rp.yml
+
+- name: Configure DCI Overlay
+  ansible.builtin.import_playbook: create_dci_overlay.yml
+
+- name: Commit
+  ansible.builtin.import_playbook: commit_dci.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

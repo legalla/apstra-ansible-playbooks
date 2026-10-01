@@ -1,0 +1,36 @@
+## ---------------------------------------------------------------------------
+## update_interfaces_speed.yml
+## Updates the speed of fabric interfaces.
+## ---------------------------------------------------------------------------
+
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: "Change Interface Speed"
+      juniper.apstra.interface_map:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          system_name: "DCX-Leaf1"
+          interface_name: "et-0/0/49"
+          speed: "40G"
+        auth_token: "{{ auth.token }}"
+        state: speed_updated
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

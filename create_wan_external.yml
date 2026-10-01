@@ -1,0 +1,100 @@
+## ---------------------------------------------------------------------------
+## create_wan_external.yml
+## Feature playbook imported by the "8_create_wan_external" orchestrator.
+## Creates a WAN-External generic system on the borders, an OSPF connectivity
+## template, assigns point-to-point IPs (RFC 5737) and imports the OSPF
+## configlet. Relies on the session/blueprint_name opened by init.yml.
+## ---------------------------------------------------------------------------
+---
+- name: Create Generic Systems for WAN External
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    ## Generic system homed on both border leaves for the WAN uplinks
+    - name: Create a generic system for WAN External
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "WAN-External"
+          hostname: "WAN-External"
+          tags:
+            - ospf
+          links:
+            - target_switch_id: "DCX-Border1"
+              target_switch_if_name: "et-0/0/0"
+              target_switch_if_transform_id: 4
+            - target_switch_id: "DCX-Border2"
+              target_switch_if_name: "et-0/0/0"
+              target_switch_if_transform_id: 4
+        state: present
+
+    ## Tagged IP link connectivity template carrying OSPF towards the WAN
+    - name: Create Connectivity Template for WAN External
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "IP-OSPF"
+          type: interface
+          description: "Routing Policy for DCI Underlay connectivity"
+          tags:
+            - ospf
+          primitives:
+            ip_links:
+              IP-OSPF:
+                security_zone: "Tenant4"
+                interface_type: tagged
+                ipv4_addressing_type: numbered
+                ipv6_addressing_type: none
+                vlan_id: 601
+        state: present
+
+    - name: Assign Connectivity Template IP-OSPF to Leafs
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "IP-OSPF"
+          body:
+            application_point_ids:
+              - "DCX-Border1:et-0/0/0"
+              - "DCX-Border2:et-0/0/0"
+          state: present
+
+    - name: Add ospf tag on VRF Tenant4
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          label: "Tenant4"
+          tags:
+            - ospf
+        state: present
+
+    ## Point-to-point /31 addressing on the WAN interfaces (RFC 5737 example)
+    - name: Assign IP to interfaces in default for DCI
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          sz_name: "Tenant4"
+          interfaces_ip_assignments:
+            - interface: "DCX-Border1:et-0/0/0.601"
+              endpoint1_ipv4_address: 203.0.113.153/31
+              endpoint2_ipv4_address: 203.0.113.152/31
+            - interface: "DCX-Border2:et-0/0/0.601"
+              endpoint1_ipv4_address: 203.0.113.155/31
+              endpoint2_ipv4_address: 203.0.113.154/31
+
+    - name: Import OSPF configlet
+      juniper.apstra.configlets:
+        type: blueprint
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          configlet: "OSPF-Tenant4"
+          condition: 'role in ["leaf"]'
+          label: "OSPF-Tenant4"
+        state: present

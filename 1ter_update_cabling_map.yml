@@ -1,0 +1,14 @@
+## ===========================================================================
+## 1ter_update_cabling_map.yml  —  Orchestrator (Step 1ter)
+## Refreshes the cabling map from LLDP data and commits. Composed exclusively
+## of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Commit
+  ansible.builtin.import_playbook: commit_cabling.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

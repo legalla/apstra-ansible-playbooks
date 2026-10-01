@@ -1,0 +1,34 @@
+## ---------------------------------------------------------------------------
+## drain_device.yml
+## Drains a device (sets it to the drain deploy mode) for maintenance.
+## ---------------------------------------------------------------------------
+---
+- name: Drain Device
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "DCX"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Set leaf1 to deploy mode
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        node_id: 
+          - "DCX-Leaf1"
+          - "DCX-Leaf2"
+        deploy_mode: deploy
+        state: node_updated
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

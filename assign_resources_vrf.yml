@@ -1,0 +1,46 @@
+## ---------------------------------------------------------------------------
+## assign_resources_vrf.yml
+## Allocates the resource pools required by a VRF / security zone.
+## ---------------------------------------------------------------------------
+---
+- name: Assign Resources to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('apstra-pod1') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: "Assign IP pool for Loopbacks in VRF VRF1"
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "ip"
+          group_name: "sz:VRF1,leaf_loopback_ips"
+        body:
+          pool_ids:
+            - "leaf-loopback"
+        state: present
+
+    - name: "Assign IP pool for Loopbacks in VRF VRF2"
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "ip"
+          group_name: "sz:VRF2,leaf_loopback_ips"
+        body:
+          pool_ids:
+            - "leaf-loopback"
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

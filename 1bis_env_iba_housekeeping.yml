@@ -1,0 +1,14 @@
+## ===========================================================================
+## 1bis_env_iba_housekeeping.yml  —  Orchestrator (Step 1bis)
+## Disables the noisy "environment" IBA probes on a freshly built fabric.
+## Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Disable Environment IBA Probes
+  ansible.builtin.import_playbook: disable_env_iba_probes.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

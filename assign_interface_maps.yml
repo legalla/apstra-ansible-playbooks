@@ -1,0 +1,24 @@
+## ---------------------------------------------------------------------------
+## assign_interface_maps.yml
+## Applies interface maps (device profile <-> logical device) to the fabric nodes.
+## ---------------------------------------------------------------------------
+---
+- name: Assign Interface Maps
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Assign interface maps to devices
+      juniper.apstra.interface_map:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          assignments:
+            spine1: "5220-32CD"
+            spine2: "5220-32CD"
+            rack_border_new_001_leaf1: "5130-48C"
+            rack_border_new_001_leaf2: "5130-48C"
+            rack_leaf_new_001_leaf1: "5120-48T"
+            rack_leaf_new_001_leaf2: "5120-48T"
+        state: present

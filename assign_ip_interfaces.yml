@@ -1,0 +1,44 @@
+## ---------------------------------------------------------------------------
+## assign_ip_interfaces.yml
+## Assigns IP addresses to fabric interfaces inside a security zone.
+## ---------------------------------------------------------------------------
+---
+- name: Assign IP to interfaces
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('apstra-pod1') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Assign IP to interfaces in default
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          sz_name: "default"
+          interfaces_ip_assignments:
+            - interface: "apstra_esi_001_leaf1:ge-0/0/6"
+              endpoint1_ipv4_address: 203.0.113.156/31
+              endpoint2_ipv4_address: 203.0.113.157/31 ### Optional
+            - interface: "apstra_esi_001_leaf2:ge-0/0/6"
+              endpoint1_ipv4_address: 203.0.113.158/31
+              endpoint2_ipv4_address: 203.0.113.159/31 ### Optional
+            - interface: "apstra_esi_001_leaf1:ge-0/0/7"
+              endpoint1_ipv4_address: 203.0.113.160/31
+              endpoint2_ipv4_address: 203.0.113.161/31 ### Optional
+            - interface: "apstra_esi_001_leaf2:ge-0/0/7"
+              endpoint1_ipv4_address: 203.0.113.162/31
+              endpoint2_ipv4_address: 203.0.113.163/31 ### Optional
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

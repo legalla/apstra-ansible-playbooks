@@ -1,0 +1,19 @@
+## ---------------------------------------------------------------------------
+## commit_servers.yml
+## Commits the blueprint after server / VIM creation.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Servers
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Commit"
+      juniper.apstra.blueprint:
+        auth_token: "{{ auth.token }}"
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        commit_description: "Servers Creation"
+        state: committed

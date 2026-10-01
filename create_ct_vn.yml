@@ -1,0 +1,78 @@
+## ---------------------------------------------------------------------------
+## create_ct_v.yml
+## Creates a virtual-network connectivity template.
+## ---------------------------------------------------------------------------
+---
+- name: Create Generic Systems for WAN External
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX-Fabric') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create a routing policy for BGP to Hosts
+      juniper.apstra.routing_policy:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          description: "BGP-to-HOST2"
+          expect_default_ipv4_route: true
+          expect_default_ipv6_route: false
+          export_policy:
+            l2edge_subnets: false
+            loopbacks: false
+            spine_leaf_links: false
+            spine_superspine_links: false
+            static_routes: false
+          extra_export_routes:
+            - prefix: "0.0.0.0/0"
+              action: "permit"
+          import_policy: "all"
+          label: "BGP-to-HOST2"
+          policy_type: "user_defined"
+        state: present
+
+    - name: Create Connectivity Template for BGP to Hosts
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "BGP-to-HOST2"
+          type: interface
+          description: "Routing Policy for BGP to Hosts"
+          tags:
+            - ospf
+          primitives:
+            virtual_network_singles:
+              vn:
+                vn_node_id: "Tenant2_VLAN22"
+                tag_type: untagged
+                bgp_peering_generic_systems:
+                  bgp_test:
+                    bfd: false
+                    session_addressing_ipv4: addressed
+                    session_addressing_ipv6: none
+                    ipv4_safi: true
+                    ipv6_safi: false
+                    ttl: 2
+                    holdtime_timer: 90
+                    keepalive_timer: 30
+                    peer_from: interface
+                    peer_to: interface_or_shared_ip_endpoint
+                    neighbor_asn_type: static
+                    routing_policies:
+                      default_rp:
+                        rp_to_attach: "BGP-to-HOST2"
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

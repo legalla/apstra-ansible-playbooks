@@ -1,0 +1,17 @@
+## ===========================================================================
+## 0_create_base.yml  —  Orchestrator (Step 0)
+## Builds the design catalog: resource pools, rack type and design template.
+## Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Rack Type
+  ansible.builtin.import_playbook: create_rack_type.yml
+
+- name: Create Design Template
+  ansible.builtin.import_playbook: create_template.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

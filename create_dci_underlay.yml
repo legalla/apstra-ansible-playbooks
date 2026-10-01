@@ -1,0 +1,99 @@
+## ---------------------------------------------------------------------------
+## create_dci_underlay.yml
+## Configures the DCI underlay point-to-point links (RFC 5737 example addressing).
+## ---------------------------------------------------------------------------
+---
+- name: Configure DCI Underlay
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create a routing policy for DCI underlay
+      juniper.apstra.routing_policy:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          description: "DCI-Underlay-RP"
+          expect_default_ipv4_route: false
+          expect_default_ipv6_route: false
+          export_policy:
+            l2edge_subnets: false
+            loopbacks: true
+            spine_leaf_links: false
+            spine_superspine_links: false
+            static_routes: false
+          import_policy: "all"
+          label: "DCI-Underlay-RP"
+          policy_type: "user_defined"
+        state: present
+
+    - name: Create DCI Underlay Connectivity Template
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "DCI"
+          type: interface
+          description: "Routing Policy for DCI Underlay connectivity"
+          tags:
+            - Router
+          primitives:
+            ip_links:
+              link_test:
+                security_zone: "default"
+                interface_type: untagged
+                ipv4_addressing_type: numbered
+                ipv6_addressing_type: none
+                l3_mtu: 9000
+                bgp_peering_generic_systems:
+                  bgp_test:
+                    bfd: false
+                    session_addressing_ipv4: addressed
+                    session_addressing_ipv6: none
+                    ipv4_safi: true
+                    ipv6_safi: false
+                    ttl: 2
+                    holdtime_timer: 90
+                    keepalive_timer: 30
+                    peer_from: interface
+                    peer_to: interface_or_ip_endpoint
+                    neighbor_asn_type: static
+                    routing_policies:
+                      default_rp:
+                        rp_to_attach: "DCI-Underlay-RP"
+        state: present
+
+    - name: Assign Connectivity Template to Interfaces on Borders for DCI
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "DCI"
+          body:
+            application_point_ids:
+              - "DCX-Border1:et-0/0/54"
+              - "DCX-Border2:et-0/0/54"
+              - "DCX-Border1:et-0/0/55"
+              - "DCX-Border2:et-0/0/55"
+          state: present
+
+    - name: Assign IP to interfaces in default for DCI
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          sz_name: "default"
+          interfaces_ip_assignments:
+            - interface: "DCX-Border1:et-0/0/54" ##DCX-Border1:et-0/0/54
+              endpoint1_ipv4_address: 203.0.113.129/31
+              endpoint2_ipv4_address: 203.0.113.128/31
+            - interface: "DCX-Border1:et-0/0/55" ##DCX-Border1:et-0/0/55
+              endpoint1_ipv4_address: 203.0.113.132/31
+              endpoint2_ipv4_address: 203.0.113.133/31
+            - interface: "DCX-Border2:et-0/0/54" ##DCX-Border2:et-0/0/54
+              endpoint1_ipv4_address: 203.0.113.131/31
+              endpoint2_ipv4_address: 203.0.113.130/31
+            - interface: "DCX-Border2:et-0/0/55" ##DCX-Border2:et-0/0/55
+              endpoint1_ipv4_address: 203.0.113.135/31
+              endpoint2_ipv4_address: 203.0.113.134/31
+        state: present

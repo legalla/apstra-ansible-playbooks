@@ -1,0 +1,54 @@
+## ---------------------------------------------------------------------------
+## create_remote_borders.yml
+## Creates the remote-border generic systems used by the DCI.
+## ---------------------------------------------------------------------------
+---
+- name: Create Generic Systems for DCI
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create a generic system for Remote Border 1
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "DCX-Border1"
+          hostname: "DCX-Border1"
+          external: true
+          asn: 65008
+          tags:
+            - border
+            - remote
+            - DCX
+          links:
+            - target_switch_id: "DCX-Border1"
+              target_switch_if_name: "et-0/0/54"
+              target_switch_if_transform_id: 1
+            - target_switch_id: "DCX-Border2"
+              target_switch_if_name: "et-0/0/54"
+              target_switch_if_transform_id: 1
+        state: present
+
+    - name: Create a generic system for Remote Border 2
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "DCX-Border2"
+          hostname: "DCX-Border2"
+          external: true
+          asn: 65009
+          tags:
+            - border
+            - remote
+            - DCX
+          links:
+            - target_switch_id: "DCX-Border1"
+              target_switch_if_name: "et-0/0/55"
+              target_switch_if_transform_id: 1
+            - target_switch_id: "DCX-Border2"
+              target_switch_if_name: "et-0/0/55"
+              target_switch_if_transform_id: 1
+        state: present

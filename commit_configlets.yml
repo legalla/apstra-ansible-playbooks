@@ -1,0 +1,19 @@
+## ---------------------------------------------------------------------------
+## commit_configlets.yml
+## Commits the blueprint after configlets / property sets import.
+## ---------------------------------------------------------------------------
+---
+- name: Commit Configlets and Property Sets
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Commit"
+      juniper.apstra.blueprint:
+        auth_token: "{{ auth.token }}"
+        id:
+          blueprint: "{{ blueprint_name }}"
+        lock_state: "ignore"
+        commit_description: "Configlets et Property Sets import"
+        state: committed

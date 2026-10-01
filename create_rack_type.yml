@@ -1,0 +1,40 @@
+## ---------------------------------------------------------------------------
+## create_rack_type.yml
+## Defines a rack type (leaf/server profile) in the design catalog.
+## ---------------------------------------------------------------------------
+---
+- name: Create Rack Types
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create Rack type "Rack-Border-New"
+      juniper.apstra.design:
+        id:
+          design_type: rack_type
+          name: Rack-Border-New
+        body:
+          leafs:
+            - leaf1:
+                label: leaf
+                link_per_spine_count: 1
+                link_per_spine_speed: 100
+                logical_device:  5130
+                redundancy_protocol: esi
+        state: present
+
+    - name: Create Rack type "Rack-Leaf-New"
+      juniper.apstra.design:
+        id:
+          design_type: rack_type
+          name: Rack-Leaf-New
+        body:
+          leafs:
+            - leaf1:
+                label: leaf
+                link_per_spine_count: 1
+                link_per_spine_speed: 100
+                logical_device:  5120
+                redundancy_protocol: esi
+        state: present

@@ -1,0 +1,43 @@
+## ---------------------------------------------------------------------------
+## update_interfaces_tags.yml
+## Updates the tags of fabric interfaces.
+## ---------------------------------------------------------------------------
+
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Tag leaf1 ge-0/0/0 as 'uplink' and 'production'
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        auth_token: "{{ auth.token }}"
+        interfaces:
+          - system_name: "DCX-Leaf1"
+            interface_name: "et-0/0/49"
+          - system_name: "DCX-Leaf1"
+            interface_name: "et-0/0/48"
+          - system_name: "DCX-Leaf2"
+            interface_name: "et-0/0/49"
+        tags:
+          - uplink
+          - production
+        tag_state: absent
+        state: interface_tagged
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

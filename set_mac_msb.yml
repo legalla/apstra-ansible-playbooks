@@ -1,0 +1,17 @@
+## ---------------------------------------------------------------------------
+## set_mac_msb.yml
+## Sets the ESI MAC most-significant-byte used for LAG hashing.
+## ---------------------------------------------------------------------------
+---
+- name: Set the ESI MAC MSB
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set ESI MAC MSB to 6
+      juniper.apstra.fabric_settings:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          esi_mac_msb: 6

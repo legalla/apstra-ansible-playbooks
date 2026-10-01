@@ -1,0 +1,69 @@
+## ---------------------------------------------------------------------------
+## test.yml
+## Scratch/test playbook (not part of the workflow).
+## ---------------------------------------------------------------------------
+---
+- name: Create Resources
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create complex configlet
+      juniper.apstra.configlets:
+        type: catalog
+        body:
+          display_name: "Complex"
+          generators:
+            - config_style: "junos"
+              section: "system"
+              template_text: |
+                routing-instances {
+                    Tenant2 {
+                        vrf-export EXPORT-Tenant2;
+                    }
+                    Tenant3 {
+                        vrf-export EXPORT-Tenant3;
+                    }
+                }
+                policy-options {
+                    community Tenant2 members target:20000:1;
+                    community Tenant3 members target:30000:1;
+                    policy-statement EXPORT-Tenant2 {
+                        term Leaking {
+                            from {
+                                route-filter 192.0.2.0/24 upto /32;
+                                }
+                            then {
+                                community add Tenant2;
+                                community add Tenant3;
+                                accept;
+                                }
+                        }
+                    }
+                    policy-statement EXPORT-Tenant3 {
+                        term Leaking {
+                            from {
+                                route-filter 192.0.2.0/24 upto /32;
+                                }
+                            then {
+                                community add Tenant2;
+                                community add Tenant3;
+                                accept;
+                                }
+                        }
+                    }
+                }
+              negation_template_text: ""
+              filename: ""
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

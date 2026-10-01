@@ -1,0 +1,90 @@
+## ---------------------------------------------------------------------------
+## create_vn.yml
+## Creates a single virtual network (VXLAN) example (RFC 5737 subnet).
+## ---------------------------------------------------------------------------
+---
+- name: Create Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Get local hostname
+      ansible.builtin.command: hostname
+      register: local_hostname
+      changed_when: false
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "apstra-pod1"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create Virtual Network 1
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "NewVN1"
+          description: "New Virtual 1"
+          ipv4_enabled: true
+          virtual_gateway_ipv4: 192.0.2.193
+          ipv4_subnet: 192.0.2.192/28
+          virtual_gateway_ipv4_enabled: true
+          bound_to:
+            - system_id: "apstra_single_001_leaf1"
+              vlan_id: 10
+            - system_id: "apstra_esi_001_leaf1"
+              vlan_id: 10
+            - system_id: "apstra_esi_001_leaf2"
+              vlan_id: 10
+          vn_id: "10001"
+          vn_type: "vxlan"
+          security_zone_id: "VRF1"
+          rt_policy: 
+            import_rt:
+              - 65000:1
+              - 1:1
+            export_rt:
+              - 65000:1
+              - 1:1
+        state: present
+
+    - name: Create Virtual Network 2
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "NewVN2"
+          description: "New Virtual 2"
+          ipv4_enabled: true
+          virtual_gateway_ipv4: 192.0.2.209
+          ipv4_subnet: 192.0.2.208/28
+          virtual_gateway_ipv4_enabled: true
+          bound_to:
+            - system_id: "apstra_single_001_leaf1"
+              vlan_id: 20
+            - system_id: "apstra_esi_001_leaf1"
+              vlan_id: 20
+            - system_id: "apstra_esi_001_leaf2"
+              vlan_id: 20
+          vn_id: "10002"
+          vn_type: "vxlan"
+          security_zone_id: "VRF2"
+          create_policy_untagged: false
+          create_policy_tagged: true
+          rt_policy: 
+            import_rt:
+              - 65000:2
+              - 1:1
+            export_rt:
+              - 65000:2
+              - 1:1
+        state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

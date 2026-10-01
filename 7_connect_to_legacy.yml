@@ -1,0 +1,14 @@
+## ===========================================================================
+## 7_connect_to_legacy.yml  —  Orchestrator (Step 7)
+## Connects the fabric to an external legacy network through an LACP bond.
+## Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Link Aggregation to connect to Legacy
+  ansible.builtin.import_playbook: connect_to_legacy.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

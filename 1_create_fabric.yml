@@ -1,0 +1,39 @@
+## ===========================================================================
+## 1_create_fabric.yml  —  Orchestrator (Step 1)
+## Instantiates the blueprint, acknowledges devices, assigns resources and
+## interface maps, renames devices, then commits. Composed exclusively of
+## imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Blueprint DCX
+  ansible.builtin.import_playbook: create_blueprint.yml
+
+- name: Acknowledge Devices
+  ansible.builtin.import_playbook: ack_devices.yml
+
+- name: Assign Resources
+  ansible.builtin.import_playbook: assign_resources.yml
+
+- name: Assign Interfaces Maps
+  ansible.builtin.import_playbook: assign_interface_maps.yml
+
+- name: Rename Devices
+  ansible.builtin.import_playbook: rename_devices.yml
+
+- name: Rename ES Pairs
+  ansible.builtin.import_playbook: rename_pairs.yml
+
+- name: Assign Devices
+  ansible.builtin.import_playbook: assign_devices.yml
+
+- name: Set ESI MAC MSB
+  ansible.builtin.import_playbook: set_mac_msb.yml
+
+- name: Commit
+  ansible.builtin.import_playbook: commit_creation.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

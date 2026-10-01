@@ -1,0 +1,35 @@
+## ---------------------------------------------------------------------------
+## create_user.yml
+## Creates a local user / role in the Apstra controller.
+## ---------------------------------------------------------------------------
+---
+- name: Create user
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Create custom role with granular permissions
+      juniper.apstra.rbac_roles:
+            body:
+                role: custom_role_ansible
+                label: custom_role_ansible
+                type: granular
+                description: Custom role from ansible
+                granular_permissions: 
+                  - scope:
+                      - DCX-Fabric1
+                      - DCX-Fabric2
+                    permissions: 
+                      - rbac.blueprint.read
+            state: present
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

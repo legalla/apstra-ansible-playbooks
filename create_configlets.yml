@@ -1,0 +1,28 @@
+## ---------------------------------------------------------------------------
+## create_configlets.yml
+## Creates the catalog configlets used by the fabric.
+## ---------------------------------------------------------------------------
+---
+- name: Create Configlets
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create configlet for NTP Configuration
+      juniper.apstra.configlets:
+        type: catalog
+        body:
+          display_name: "NTP Config"
+          generators:
+            - config_style: "junos"
+              section: "system"
+              template_text: |
+                system {
+                  ntp {
+                      server {{ '{{' }}ntp_server{{ '}}' }} routing-instance {{ '{{' }}junos_mgmt_vrf{{ '}}' }};
+                  }
+                }
+              negation_template_text: ""
+              filename: ""
+        state: present

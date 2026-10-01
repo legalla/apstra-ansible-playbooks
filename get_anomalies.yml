@@ -1,0 +1,37 @@
+## ---------------------------------------------------------------------------
+## get_anomalies.yml
+## Retrieves the current anomalies of the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Assign VIM to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('DCX') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Collect all health data from a blueprint
+      juniper.apstra.blueprint_health:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        scope: anomalies
+        node_filter: "DCX-Leaf1"
+        anomaly_type: "Interface"
+      register: health
+
+    - name: Display data
+      ansible.builtin.debug:
+        var: health
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

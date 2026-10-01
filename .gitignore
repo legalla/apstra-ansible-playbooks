@@ -1,0 +1,12 @@
+# Real values; only vars/credentials.example.yml is tracked
+vars/credentials.yml
+*.vault
+.vault_pass*
+
+# Ansible runtime
+*.retry
+ansible.log
+
+# Editor / OS
+.vscode/
+.DS_Store

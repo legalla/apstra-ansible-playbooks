@@ -1,0 +1,39 @@
+## ---------------------------------------------------------------------------
+## upgrade_device_single.yml
+## Upgrades a single device (OS image).
+## ---------------------------------------------------------------------------
+---
+- name: Upgrade Single Device
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Set blueprint name fact
+      ansible.builtin.set_fact:
+        blueprint_name: "{{ blueprint_name | default('apstra-pod1') }}"
+
+    - name: Connect to Apstra
+      juniper.apstra.authenticate:
+        logout: false
+      register: auth
+
+    - name: Upgrade DCX-Spine1 to a specific OS image
+      juniper.apstra.os_upgrade:
+        id:
+          blueprint: "Fabric1"
+          system: "DCX-Spine1"
+        body:
+          image: "junos-evo-install-qfx-ms-x86-64-23.4R2-S6.9-EVO.iso"
+          wait_timeout: 900
+        state: present
+      register: upgrade_result
+
+    - name: Show upgrade result
+      ansible.builtin.debug:
+        var: upgrade_result
+
+    - name: Logout of Apstra
+      juniper.apstra.authenticate:
+        logout: true
+        auth_token: "{{ auth.token }}"

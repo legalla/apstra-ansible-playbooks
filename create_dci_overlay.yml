@@ -1,0 +1,53 @@
+## ---------------------------------------------------------------------------
+## create_dci_overlay.yml
+## Configures the DCI overlay (EVPN) towards the remote data center.
+## ---------------------------------------------------------------------------
+---
+- name: Create DCI Overlay Base configuration
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create interconnect domain with ESI MAC
+      juniper.apstra.interconnect_gateway:
+        type: domain
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          label: "Transit"
+          route_target: "1:1"
+          esi_mac: "10:00:00:00:00:02"
+        state: present
+
+    - name: Create interconnect gateway for Border 1
+      juniper.apstra.interconnect_gateway:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          gw_name: "DCX-BL1"
+          gw_ip: "198.51.100.156"
+          gw_asn: 65008
+          evpn_interconnect_group_id: "Transit"
+          local_gw_nodes:
+            - "DCX-Border1"
+          ttl: 2
+          keepalive_timer: 10
+          holdtime_timer: 30
+        state: present
+
+    - name: Create interconnect gateway for Border 2
+      juniper.apstra.interconnect_gateway:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          gw_name: "DCX-BL2"
+          gw_ip: "198.51.100.157"
+          gw_asn: 65009
+          evpn_interconnect_group_id: "Transit"
+          local_gw_nodes:
+            - "DCX-Border2"
+          ttl: 2
+          keepalive_timer: 10
+          holdtime_timer: 30
+        state: present

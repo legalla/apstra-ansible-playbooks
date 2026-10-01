@@ -1,0 +1,26 @@
+## ---------------------------------------------------------------------------
+## import_property_sets.yml
+## Imports the catalog property sets into the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Import Property Sets into Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Import NTP Property Set to blueprint
+      juniper.apstra.property_set:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          id: "NTP"
+        state: present
+
+    - name: Import sFlow Property Set to blueprint
+      juniper.apstra.property_set:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          id: "Flow Data For Optional Flow Analytics"
+        state: present

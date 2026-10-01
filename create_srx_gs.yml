@@ -1,0 +1,56 @@
+## ---------------------------------------------------------------------------
+## create_srx_gs.yml
+## Creates the generic system representing the SRX firewall.
+## ---------------------------------------------------------------------------
+---
+- name: Create Generic Systems for SRX
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create a generic system representing SRX L2
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "SRX-L2"
+          hostname: "SRX-L2"
+          port_channel_id_min: 2
+          port_channel_id_max: 2
+          tags:
+            - SRX
+            - rstp-disable
+          links:
+            - target_switch_id: "DCX-leaf1"
+              target_switch_if_name: "xe-0/0/2"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-leaf2"
+              target_switch_if_name: "xe-0/0/2"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present
+
+    - name: Create a generic system representing SRX L3
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "SRX-L3"
+          hostname: "SRX-L3"
+          asn: 65900
+          port_channel_id_min: 3
+          port_channel_id_max: 3
+          tags:
+            - SRX
+          links:
+            - target_switch_id: "DCX-leaf1"
+              target_switch_if_name: "xe-0/0/3"
+              target_switch_if_transform_id: 1
+            - target_switch_id: "DCX-leaf2"
+              target_switch_if_name: "xe-0/0/3"
+              target_switch_if_transform_id: 1
+        state: present

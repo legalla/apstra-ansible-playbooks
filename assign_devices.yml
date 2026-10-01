@@ -1,0 +1,24 @@
+## ---------------------------------------------------------------------------
+## assign_devices.yml
+## Binds physical device serial numbers to the logical switches of the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Assign Devices to Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: "Assign Serials and Deploy Mode to blueprint nodes"
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        assignment:
+            DCX-Spine1: "XC0219160001"
+            DCX-Spine2: "XC3621490011"
+            DCX-Border1: "FY4625AV0427"
+            DCX-Border2: "FY3925AV0119"
+            DCX-Leaf1: "WJ3721030063"
+            DCX-Leaf2: "WJ3720350155"
+        deploy_mode: deploy
+        state: node_updated

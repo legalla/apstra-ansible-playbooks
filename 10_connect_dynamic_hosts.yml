@@ -1,0 +1,14 @@
+## ===========================================================================
+## 10_connect_dynamic_hosts.yml  —  Orchestrator (Step 10)
+## Enables dynamic (BGP) routing towards hosts and sets the floating gateway.
+## Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Connectivity Template for BGP to Hosts
+  ansible.builtin.import_playbook: connect_dynamic_hosts.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml

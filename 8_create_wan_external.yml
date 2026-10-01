@@ -1,0 +1,18 @@
+## ===========================================================================
+## 8_create_wan_external.yml  —  Orchestrator (Step 8)
+## Builds the WAN external connectivity (generic system, OSPF CT, IP addressing
+## and configlet). Composed exclusively of imported playbooks.
+## ===========================================================================
+---
+- name: Connect to Apstra and set Blueprint Name as Variable
+  ansible.builtin.import_playbook: init.yml
+
+- name: Create Generic Systems for WAN External
+  ansible.builtin.import_playbook: create_wan_external.yml
+
+- name: Logout from Apstra
+  ansible.builtin.import_playbook: logout.yml
+
+
+
+

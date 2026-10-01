@@ -1,0 +1,64 @@
+## ---------------------------------------------------------------------------
+## rename_devices.yml
+## Renames fabric devices to their intended hostnames.
+## ---------------------------------------------------------------------------
+---
+- name: Rename Devices
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Update name and hostname for spine1
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "spine1"
+        node_label: "DCX-Spine1"
+        hostname: "DCX-Spine1"
+        state: node_updated
+
+    - name: Update name and hostname for spine2
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "spine2"
+        node_label: "DCX-Spine2"
+        hostname: "DCX-Spine2"
+        state: node_updated
+
+    - name: Update name and hostname for rack_border_new_001_leaf1
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_border_new_001_leaf1"
+        node_label: "DCX-Border1"
+        hostname: "DCX-Border1"
+        state: node_updated
+
+    - name: Update name and hostname for rack_border_new_001_leaf2
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_border_new_001_leaf2"
+        node_label: "DCX-Border2"
+        hostname: "DCX-Border2"
+        state: node_updated
+
+    - name: Update name and hostname for rack_leaf_new_001_leaf1
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_leaf_new_001_leaf1"
+        node_label: "DCX-Leaf1"
+        hostname: "DCX-Leaf1"
+        state: node_updated
+
+    - name: Update name and hostname for rack_leaf_new_001_leaf2
+      juniper.apstra.blueprint:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        current_label: "rack_leaf_new_001_leaf2"
+        node_label: "DCX-Leaf2"
+        hostname: "DCX-Leaf2"
+        state: node_updated

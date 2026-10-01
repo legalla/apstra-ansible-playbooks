@@ -1,0 +1,187 @@
+## ---------------------------------------------------------------------------
+## create_tenant_l3.yml
+## Creates tenant 2: its VRF and virtual networks (RFC 5737 subnets).
+## ---------------------------------------------------------------------------
+---
+- name: Create Tenant 2
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Create VRF Tenant2
+      juniper.apstra.security_zone:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          description: "Tenant2"
+          vni_id: 20000
+          sz_type: evpn
+          junos_evpn_irb_mode: "symmetric"
+          label: "Tenant2"
+          vrf_name: "Tenant2"
+        state: present
+
+    - name: Assign IP pool for Loopbacks in VRF Tenant2
+      juniper.apstra.resource_group:
+        id:
+          blueprint: "{{ blueprint_name }}"
+          group_type: "ip"
+          group_name: "sz:Tenant2,leaf_loopback_ips"
+        body:
+          pool_ids:
+            - "Fabric2-Loopbacks"
+        state: present
+
+    - name: Create Virtual Network VLAN20 in Tenant2
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "Tenant2_VLAN20"
+          description: "VLAN20 in Tenant2"
+          ipv4_enabled: true
+          virtual_gateway_ipv4: 192.0.2.49
+          ipv4_subnet: 192.0.2.48/28
+          virtual_gateway_ipv4_enabled: true
+          vlan_id: 20
+          create_policy_tagged: true
+          bound_to:
+            - system_id: "Borders-Pair"
+            - system_id: "Leafs-Pair"
+          vn_id: "10020"
+          vn_type: "vxlan"
+          security_zone_id: "Tenant2"
+        state: present
+
+    - name: Create Virtual Network VLAN21 in Tenant2
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "Tenant2_VLAN21"
+          description: "VLAN21 in Tenant2"
+          ipv4_enabled: true
+          virtual_gateway_ipv4: 192.0.2.65
+          ipv4_subnet: 192.0.2.64/28
+          virtual_gateway_ipv4_enabled: true
+          vlan_id: 21
+          create_policy_tagged: true
+          bound_to:
+            - system_id: "Borders-Pair"
+            - system_id: "Leafs-Pair"
+          vn_id: "10021"
+          vn_type: "vxlan"
+          security_zone_id: "Tenant2"
+        state: present
+
+    - name: Create Virtual Network VLAN22 in Tenant2
+      juniper.apstra.virtual_network:
+        id:
+          blueprint: "{{ blueprint_name}}"
+        body:
+          label: "Tenant2_VLAN22"
+          description: "VLAN22 in Tenant2"
+          ipv4_enabled: true
+          virtual_gateway_ipv4: 192.0.2.81
+          ipv4_subnet: 192.0.2.80/28
+          virtual_gateway_ipv4_enabled: true
+          vlan_id: 22
+          create_policy_tagged: true
+          bound_to:
+            - system_id: "Borders-Pair"
+            - system_id: "Leafs-Pair"
+          vn_id: "10022"
+          vn_type: "vxlan"
+          security_zone_id: "Tenant2"
+        state: present
+
+    - name: Rename Connectivity Template VLAN20 to a more comprehensive name
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Tagged VxLAN 'Tenant2_VLAN20'"
+          new_name: "Tenant2_VLAN20"
+        state: present
+
+    - name: Rename Connectivity Template VLAN21 to a more comprehensive name
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Tagged VxLAN 'Tenant2_VLAN21'"
+          new_name: "Tenant2_VLAN21"
+        state: present
+
+    - name: Rename Connectivity Template VLAN22 to a more comprehensive name
+      juniper.apstra.connectivity_template:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "Tagged VxLAN 'Tenant2_VLAN22'"
+          new_name: "Tenant2_VLAN22"
+        state: present
+
+    - name: Assign Connectivity Template to Interfaces for VN Tenant2_VLAN20
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "Tenant2_VLAN20"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae1"
+          state: present
+
+    - name: Assign Connectivity Template to Interfaces for VN Tenant2_VLAN21
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "Tenant2_VLAN21"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae1"
+          state: present
+
+    - name: Assign Connectivity Template to Interfaces for VN Tenant2_VLAN22
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "Tenant2_VLAN22"
+          body:
+            application_point_ids:
+              - "DCX-Leaf1/DCX-Leaf2:ae1"
+          state: present
+
+    - name: Create L3 Policy for Tenant 2
+      juniper.apstra.interconnect_gateway:
+        type: domain
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          label: "Transit"
+          security_zones:
+            "Tenant2":
+              routing_policy_id: "DCI-Overlay"
+              interconnect_route_target: "120000:1"
+              enabled_for_l3: true
+        state: present
+
+    - name: Set Virtual Networks connection type
+      juniper.apstra.interconnect_gateway:
+        type: domain
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          label: "Transit"
+          virtual_networks:
+            "Tenant2_VLAN20":
+              l2: true
+              l3: true
+            "Tenant2_VLAN21":
+              l2: true
+              l3: true
+            "Tenant2_VLAN22":
+              l2: true
+              l3: true
+        state: present

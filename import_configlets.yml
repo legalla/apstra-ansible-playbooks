@@ -1,0 +1,32 @@
+## ---------------------------------------------------------------------------
+## import_configlets.yml
+## Imports the catalog configlets into the blueprint.
+## ---------------------------------------------------------------------------
+---
+- name: Import Configlets into Blueprint
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Import NTP configlet
+      juniper.apstra.configlets:
+        type: blueprint
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          configlet: "NTP"
+          condition: 'role in ["spine", "leaf"]'
+          label: "NTP"
+        state: present
+
+    - name: Import sFlow configlet
+      juniper.apstra.configlets:
+        type: blueprint
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          configlet: "Flow Data For Optional Flow Analytics"
+          condition: 'role in ["spine", "leaf"]'
+          label: "Flow Data For Optional Flow Analytics"
+        state: present

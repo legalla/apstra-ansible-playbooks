@@ -1,0 +1,60 @@
+## ---------------------------------------------------------------------------
+## connect_to_legacy.yml
+## Feature playbook imported by the "7_connect_to_legacy" orchestrator.
+## Creates a dual-homed LACP generic system representing an external legacy
+## network and attaches the Tenant4 VLAN connectivity templates to its bond.
+## Relies on the session/blueprint_name opened by init.yml.
+## ---------------------------------------------------------------------------
+---
+- name: Create Link Aggregation to connect to Legacy
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+
+    ## Generic system with an ae10 LACP bond towards the legacy network
+    - name: Create a generic system representing Legacy Network
+      juniper.apstra.generic_systems:
+        id:
+          blueprint: "{{ blueprint_name }}"
+        body:
+          name: "External-Legacy"
+          hostname: "External-Legacy"
+          port_channel_id_min: 10
+          port_channel_id_max: 10
+          tags:
+            - legacy
+            - remote
+          links:
+            - target_switch_id: "DCX-leaf1"
+              target_switch_if_name: "xe-0/0/0"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+            - target_switch_id: "DCX-leaf2"
+              target_switch_if_name: "xe-0/0/0"
+              target_switch_if_transform_id: 1
+              lag_mode: "lacp_active"
+              group_label: "bond0"
+        state: present
+
+    ## Attach the two Tenant4 VLAN connectivity templates to the ae10 bond
+    - name: Assign Connectivity Template Tenant4_VLAN41 to ae10
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "Tenant4_VLAN41"
+          body:
+            application_point_ids:
+              - "DCX-leaf1/DCX-leaf2:ae10"
+          state: present
+
+    - name: Assign Connectivity Template Tenant4_VLAN42 to ae10
+      juniper.apstra.connectivity_template_assignment:
+          id:
+            blueprint: "{{ blueprint_name }}"
+            ct_id: "Tenant4_VLAN42"
+          body:
+            application_point_ids:
+              - "DCX-leaf1/DCX-leaf2:ae10"
+          state: present
